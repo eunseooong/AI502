@@ -8,4 +8,7 @@ class Config:
         self.batch_size = 128
         self.lr = 2e-4
         self.device = 'cuda'
+        self.conditional = False  # True for conditional (MNIST)
+        self.num_epochs = 50
+        self.save_dir = './results'
         # ... 기타 하이퍼파라미터
