@@ -18,7 +18,8 @@ def get_dataloader(config, dataset_name):
         config.num_classes = 10
         config.conditional = True
         transform = transforms.Compose([
-            transforms.Resize(config.image_size),
+            #transforms.Resize(config.image_size),
+            transforms.Pad(2),
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ])

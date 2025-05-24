@@ -67,8 +67,8 @@ class UNet(nn.Module):
         self.bot1 = Block(256, 256, time_emb_dim, down=True)
         self.bot2 = Block(256, 256, time_emb_dim, down=False)
         self.up2 = Block(256, 128, time_emb_dim, down=False)
-        self.up1 = Block(128, 64, time_emb_dim, down=False)
-        self.out_conv = nn.Conv2d(64, config.num_channels, 1)
+        self.up1 = Block(384, 128, time_emb_dim, down=False)
+        self.out_conv = nn.Conv2d(128, config.num_channels, 1)
 
     def forward(self, x, t, y=None):
         t_emb = self.time_mlp(t)
@@ -82,6 +82,14 @@ class UNet(nn.Module):
         b1 = self.bot1(d2, t_emb)
         b2 = self.bot2(b1, t_emb)
         u2 = self.up2(b2, t_emb)
-        u1 = self.up1(u2 + d2, t_emb)
+        
+        if d2.shape[2:] != u2.shape[2:]:
+            d2 = torch.nn.functional.interpolate(d2, size=u2.shape[2:], mode='nearest')
+
+        u1 = self.up1(torch.cat([u2, d2], dim=1), t_emb)
+
+        if d1.shape[2:] != u1.shape[2:]:
+            d1 = torch.nn.functional.interpolate(d1, size=u1.shape[2:], mode='nearest')
+
         out = self.out_conv(u1 + d1)
         return out
