@@ -57,7 +57,33 @@ class DDPM:
             x_t = self.p_sample(model, x_t, t, y)
         return x_t
 
-    # Optional: DDIM sampling (Phase 3)
-    def ddim_sample_loop(self, model, shape, device, ddim_steps, y=None):
-        # Implement DDIM deterministic sampling for faster inference
-        pass
+    #DDIM sampling (Phase 3)
+    def ddim_sample_loop(self, model, shape, device, ddim_steps, eta=0.0, y=None):
+
+        ddim_timestep_seq = torch.linspace(0, self.T - 1, ddim_steps, dtype=torch.long).to(device)
+        ddim_alphas_cumprod = self.alphas_cumprod[ddim_timestep_seq]
+        ddim_sqrt_alphas_cumprod = torch.sqrt(ddim_alphas_cumprod)
+        ddim_sqrt_one_minus_alphas_cumprod = torch.sqrt(1 - ddim_alphas_cumprod)
+
+        x_t = torch.randn(shape, device=device)
+
+        for i in reversed(range(ddim_steps)):
+            t = ddim_timestep_seq[i].repeat(shape[0])
+            alpha = ddim_alphas_cumprod[i]
+            sqrt_alpha = ddim_sqrt_alphas_cumprod[i]
+            sqrt_one_minus_alpha = ddim_sqrt_one_minus_alphas_cumprod[i]
+
+            eps = model(x_t, t, y)
+
+            if i == 0:
+                x_t = (x_t - eps * sqrt_one_minus_alpha) / sqrt_alpha
+                continue
+
+            next_alpha = ddim_alphas_cumprod[i - 1]
+            sigma = eta * torch.sqrt((1 - next_alpha) / (1 - alpha) * (1 - alpha / next_alpha))
+            noise = torch.randn_like(x_t) if eta > 0 else 0.
+
+            x_0 = (x_t - sqrt_one_minus_alpha * eps) / sqrt_alpha
+            x_t = torch.sqrt(next_alpha) * x_0 + torch.sqrt(1 - next_alpha - sigma**2) * eps + sigma * noise
+
+        return x_t

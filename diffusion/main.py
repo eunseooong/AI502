@@ -17,7 +17,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
     train(model, dataloader, diffusion, optimizer, config)
     # 최종 샘플 생성
-    sample(model, diffusion, config, num_samples=16, y=torch.arange(16, device=config.device)%config.num_classes if config.conditional else None)
+    sample(model, diffusion, config, num_samples=16, y=torch.arange(16, device=config.device)%config.num_classes if config.conditional else None, use_ddim=True)
 
 if __name__ == '__main__':
     main()
