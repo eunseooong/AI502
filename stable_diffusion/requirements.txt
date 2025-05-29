@@ -1,0 +1,9 @@
+torch>=2.0.0
+torchaudio
+torchvision
+transformers==4.37.2
+diffusers>=0.21.0
+accelerate>=0.20.0
+scipy
+numpy<2
+Pillow
